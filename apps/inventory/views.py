@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
@@ -17,6 +18,7 @@ class MovementListView(ListView):
     model = StockMovement
     template_name = "inventory/movement_list.html"
     context_object_name = "movements"
+    paginate_by = 20
 
 
 @login_required
@@ -40,6 +42,7 @@ def movement_create_view(request):
         except InsufficientStockError as exc:
             form.add_error(None, str(exc))
         else:
+            messages.success(request, "Movimiento registrado correctamente.")
             return redirect("inventory:movements")
 
     return render(

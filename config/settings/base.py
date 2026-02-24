@@ -93,3 +93,8 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:index"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {
+    message_constants.ERROR: "danger",
+}
+

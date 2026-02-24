@@ -2,27 +2,43 @@ import csv
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.db import models
+from django.core.paginator import Paginator
+from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import render
 
 from apps.inventory.models import StockMovement
 from apps.products.models import Product
 
+PAGE_SIZE = 20
+
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+
 
 @login_required
 def movement_report_view(request):
     movements = StockMovement.objects.select_related("product", "performed_by")
 
-    # Filtros simples por fecha, tipo y producto
     movement_type = request.GET.get("movement_type")
     product_id = request.GET.get("product")
+    date_from = _parse_date(request.GET.get("date_from"))
+    date_to = _parse_date(request.GET.get("date_to"))
 
     if movement_type:
         movements = movements.filter(movement_type=movement_type)
-
     if product_id:
         movements = movements.filter(product_id=product_id)
+    if date_from:
+        movements = movements.filter(created_at__date__gte=date_from)
+    if date_to:
+        movements = movements.filter(created_at__date__lte=date_to)
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -55,12 +71,17 @@ def movement_report_view(request):
             )
         return response
 
+    paginator = Paginator(movements, PAGE_SIZE)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
     products = Product.objects.filter(is_active=True)
     return render(
         request,
         "reports/movement_report.html",
         {
-            "movements": movements,
+            "movements": page_obj,
+            "page_obj": page_obj,
             "products": products,
         },
     )
@@ -69,7 +90,7 @@ def movement_report_view(request):
 @login_required
 def low_stock_report_view(request):
     products = Product.objects.filter(
-        is_active=True, stock_quantity__lte=models.F("minimum_stock")
+        is_active=True, stock_quantity__lte=F("minimum_stock")
     )
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -96,11 +117,16 @@ def low_stock_report_view(request):
             )
         return response
 
+    paginator = Paginator(products, PAGE_SIZE)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "reports/low_stock_report.html",
         {
-            "products": products,
+            "products": page_obj,
+            "page_obj": page_obj,
         },
     )
 

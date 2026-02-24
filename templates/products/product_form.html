@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-3">{{ title }}</h1>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+  {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="id_name" class="form-label">{{ form.name.label }}</label>
+    {{ form.name }}
+    {% if form.name.errors %}<div class="invalid-feedback d-block">{% for e in form.name.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_sku" class="form-label">{{ form.sku.label }}</label>
+    {{ form.sku }}
+    {% if form.sku.errors %}<div class="invalid-feedback d-block">{% for e in form.sku.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_category" class="form-label">{{ form.category.label }}</label>
+    {{ form.category }}
+    {% if form.category.errors %}<div class="invalid-feedback d-block">{% for e in form.category.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_supplier" class="form-label">{{ form.supplier.label }}</label>
+    {{ form.supplier }}
+    {% if form.supplier.errors %}<div class="invalid-feedback d-block">{% for e in form.supplier.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_unit_price" class="form-label">{{ form.unit_price.label }}</label>
+    {{ form.unit_price }}
+    {% if form.unit_price.errors %}<div class="invalid-feedback d-block">{% for e in form.unit_price.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_stock_quantity" class="form-label">{{ form.stock_quantity.label }}</label>
+    {{ form.stock_quantity }}
+    {% if form.stock_quantity.errors %}<div class="invalid-feedback d-block">{% for e in form.stock_quantity.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3">
+    <label for="id_minimum_stock" class="form-label">{{ form.minimum_stock.label }}</label>
+    {{ form.minimum_stock }}
+    {% if form.minimum_stock.errors %}<div class="invalid-feedback d-block">{% for e in form.minimum_stock.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <div class="mb-3 form-check">
+    {{ form.is_active }}
+    <label for="id_is_active" class="form-check-label">{{ form.is_active.label }}</label>
+    {% if form.is_active.errors %}<div class="invalid-feedback d-block">{% for e in form.is_active.errors %}{{ e }}{% endfor %}</div>{% endif %}
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{% url 'products:list' %}" class="btn btn-outline-secondary">Cancelar</a>
+</form>
+{% endblock %}

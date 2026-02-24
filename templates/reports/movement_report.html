@@ -6,7 +6,15 @@
 <h1 class="h4 mb-3">Reporte de movimientos</h1>
 
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-3">
+  <div class="col-md-2">
+    <label class="form-label">Desde</label>
+    <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Hasta</label>
+    <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+  </div>
+  <div class="col-md-2">
     <label class="form-label">Producto</label>
     <select name="product" class="form-select">
       <option value="">Todos</option>
@@ -17,26 +25,18 @@
       {% endfor %}
     </select>
   </div>
-  <div class="col-md-3">
-    <label class="form-label">Tipo de movimiento</label>
+  <div class="col-md-2">
+    <label class="form-label">Tipo</label>
     <select name="movement_type" class="form-select">
       <option value="">Todos</option>
-      <option value="ENTRY" {% if request.GET.movement_type == "ENTRY" %}selected{% endif %}>
-        Entrada
-      </option>
-      <option value="EXIT" {% if request.GET.movement_type == "EXIT" %}selected{% endif %}>
-        Salida
-      </option>
-      <option value="ADJUSTMENT" {% if request.GET.movement_type == "ADJUSTMENT" %}selected{% endif %}>
-        Ajuste
-      </option>
+      <option value="ENTRY" {% if request.GET.movement_type == "ENTRY" %}selected{% endif %}>Entrada</option>
+      <option value="EXIT" {% if request.GET.movement_type == "EXIT" %}selected{% endif %}>Salida</option>
+      <option value="ADJUSTMENT" {% if request.GET.movement_type == "ADJUSTMENT" %}selected{% endif %}>Ajuste</option>
     </select>
   </div>
-  <div class="col-md-3 d-flex align-items-end">
-    <button type="submit" class="btn btn-secondary me-2">Filtrar</button>
-    <button type="submit" name="export" value="csv" class="btn btn-outline-primary">
-      Exportar CSV
-    </button>
+  <div class="col-md-4 d-flex align-items-end gap-2">
+    <button type="submit" class="btn btn-secondary">Filtrar</button>
+    <button type="submit" name="export" value="csv" class="btn btn-outline-primary">Exportar CSV</button>
   </div>
 </form>
 
@@ -70,5 +70,18 @@
     {% endfor %}
   </tbody>
 </table>
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginación" class="mt-2">
+  <ul class="pagination pagination-sm">
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.product %}&product={{ request.GET.product }}{% endif %}{% if request.GET.movement_type %}&movement_type={{ request.GET.movement_type }}{% endif %}">Anterior</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Pág. {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.product %}&product={{ request.GET.product }}{% endif %}{% if request.GET.movement_type %}&movement_type={{ request.GET.movement_type }}{% endif %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}
 
