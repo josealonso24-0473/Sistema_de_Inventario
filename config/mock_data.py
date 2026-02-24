@@ -105,7 +105,9 @@ def _build_movements():
 
 # Listas listas para usar (objetos con .product, .category, etc. resueltos)
 MOCK_PRODUCTS = _build_products()
-MOCK_MOVEMENTS = sorted(_build_movements(), key=lambda m: m.created_at, reverse=True)
+MOCK_MOVEMENTS = _build_movements()
+_next_product_id = max((p.id for p in MOCK_PRODUCTS), default=0) + 1
+_next_movement_id = max((m.id for m in MOCK_MOVEMENTS), default=0) + 1
 
 
 def get_mock_products(active_only=True):
@@ -126,4 +128,127 @@ def get_mock_low_stock_products():
 
 
 def get_mock_movements():
-    return list(MOCK_MOVEMENTS)
+    # Siempre devolver copia ordenada, más reciente primero
+    return sorted(MOCK_MOVEMENTS, key=lambda m: m.created_at, reverse=True)
+
+
+def create_mock_product(
+    *,
+    name,
+    sku,
+    category_id=None,
+    supplier_id=None,
+    unit_price=0,
+    stock_quantity=0,
+    minimum_stock=0,
+    is_active=True,
+):
+    """
+    Crea un producto en memoria y lo añade a la lista MOCK_PRODUCTS.
+    """
+    global _next_product_id
+
+    p = _mk_product(
+        _next_product_id,
+        name,
+        sku,
+        category_id,
+        supplier_id,
+        unit_price,
+        stock_quantity,
+        minimum_stock,
+        is_active=is_active,
+    )
+    # Resolver relaciones para que las vistas puedan mostrar category / supplier
+    p.category = None
+    if category_id is not None:
+        p.category = next((c for c in MOCK_CATEGORIES if c.id == category_id), None)
+    p.supplier = None
+    if supplier_id is not None:
+        p.supplier = next((s for s in MOCK_SUPPLIERS if s.id == supplier_id), None)
+
+    MOCK_PRODUCTS.append(p)
+    _next_product_id += 1
+    return p
+
+
+def update_mock_product(
+    product_id,
+    *,
+    name,
+    sku,
+    category_id=None,
+    supplier_id=None,
+    unit_price=0,
+    stock_quantity=0,
+    minimum_stock=0,
+    is_active=True,
+):
+    """
+    Actualiza un producto existente en MOCK_PRODUCTS en memoria.
+    """
+    product = get_mock_product_by_id(product_id)
+    if product is None:
+        raise ValueError("Producto no encontrado.")
+
+    product.name = name
+    product.sku = sku
+    product.unit_price = unit_price
+    product.stock_quantity = stock_quantity
+    product.minimum_stock = minimum_stock
+    product.is_active = is_active
+
+    product.category_id = category_id
+    product.category = None
+    if category_id is not None:
+        product.category = next((c for c in MOCK_CATEGORIES if c.id == category_id), None)
+
+    product.supplier_id = supplier_id
+    product.supplier = None
+    if supplier_id is not None:
+        product.supplier = next((s for s in MOCK_SUPPLIERS if s.id == supplier_id), None)
+
+    return product
+
+
+def create_mock_movement(*, product_id, movement_type, quantity, reason, user):
+    """
+    Crea un movimiento en memoria y actualiza el stock del producto asociado.
+    No persiste nada en base de datos; se mantiene solo mientras dure el proceso.
+    """
+    from apps.inventory.models import StockMovement  # import local para evitar ciclos
+
+    global _next_movement_id
+
+    product = get_mock_product_by_id(product_id)
+    if product is None:
+        raise ValueError("Producto no encontrado.")
+
+    if movement_type == StockMovement.EXIT and quantity > product.stock_quantity:
+        raise ValueError(
+            f"La salida excede el stock disponible. Stock actual: {product.stock_quantity}."
+        )
+
+    if movement_type == StockMovement.ENTRY:
+        product.stock_quantity += quantity
+    elif movement_type == StockMovement.EXIT:
+        product.stock_quantity -= quantity
+    elif movement_type == StockMovement.ADJUSTMENT:
+        product.stock_quantity = quantity
+
+    username = getattr(user, "username", str(user))
+    movement = SimpleNamespace(
+        id=_next_movement_id,
+        pk=_next_movement_id,
+        product_id=product_id,
+        movement_type=movement_type,
+        quantity=quantity,
+        reason=reason or "",
+        performed_by=_mk_user(username),
+        created_at=datetime.now(),
+    )
+    movement.product = product
+
+    MOCK_MOVEMENTS.append(movement)
+    _next_movement_id += 1
+    return movement

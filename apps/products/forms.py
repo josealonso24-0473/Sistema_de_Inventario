@@ -1,6 +1,17 @@
 from django import forms
+from django.conf import settings
 
 from .models import Product, Category, Supplier
+
+
+def get_product_form(data=None, *, instance=None):
+    """
+    Devuelve el formulario adecuado según USE_MOCK_DATA.
+    En modo mock se usa un formulario en memoria que trabaja con config.mock_data.
+    """
+    if getattr(settings, "USE_MOCK_DATA", False):
+        return ProductFormMock(data=data, instance=instance)
+    return ProductForm(data=data, instance=instance)
 
 
 class ProductForm(forms.ModelForm):
@@ -21,9 +32,15 @@ class ProductForm(forms.ModelForm):
             "sku": forms.TextInput(attrs={"class": "form-control"}),
             "category": forms.Select(attrs={"class": "form-select"}),
             "supplier": forms.Select(attrs={"class": "form-select"}),
-            "unit_price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
-            "stock_quantity": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
-            "minimum_stock": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "unit_price": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "stock_quantity": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0"}
+            ),
+            "minimum_stock": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0"}
+            ),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
@@ -33,3 +50,87 @@ class ProductForm(forms.ModelForm):
         self.fields["category"].required = False
         self.fields["supplier"].queryset = Supplier.objects.all().order_by("name")
         self.fields["supplier"].required = False
+
+
+class ProductFormMock(forms.Form):
+    """Formulario de producto que trabaja solo con datos mock (sin BD)."""
+
+    name = forms.CharField(
+        label="Nombre",
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    sku = forms.CharField(
+        label="SKU",
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    category = forms.TypedChoiceField(
+        label="Categoría",
+        choices=[],
+        coerce=lambda v: int(v) if v not in (None, "",) else None,
+        required=False,
+        empty_value=None,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    supplier = forms.TypedChoiceField(
+        label="Proveedor",
+        choices=[],
+        coerce=lambda v: int(v) if v not in (None, "",) else None,
+        required=False,
+        empty_value=None,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    unit_price = forms.DecimalField(
+        label="Precio unitario",
+        max_digits=10,
+        decimal_places=2,
+        min_value=0,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "step": "0.01", "min": "0"}
+        ),
+    )
+    stock_quantity = forms.IntegerField(
+        label="Stock",
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+    )
+    minimum_stock = forms.IntegerField(
+        label="Stock mínimo",
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+    )
+    is_active = forms.BooleanField(
+        label="Activo",
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+    def __init__(self, data=None, *, instance=None, **kwargs):
+        super().__init__(data=data, **kwargs)
+        from config.mock_data import MOCK_CATEGORIES, MOCK_SUPPLIERS
+
+        self.fields["category"].choices = [("", "Sin categoría")] + [
+            (c.id, c.name) for c in MOCK_CATEGORIES
+        ]
+        self.fields["supplier"].choices = [("", "Sin proveedor")] + [
+            (s.id, s.name) for s in MOCK_SUPPLIERS
+        ]
+
+        # Cargar valores iniciales al editar en modo mock
+        if instance is not None and not data:
+            self.initial.update(
+                {
+                    "name": getattr(instance, "name", ""),
+                    "sku": getattr(instance, "sku", ""),
+                    "category": getattr(instance, "category_id", None)
+                    or getattr(getattr(instance, "category", None), "id", None),
+                    "supplier": getattr(instance, "supplier_id", None)
+                    or getattr(getattr(instance, "supplier", None), "id", None),
+                    "unit_price": getattr(instance, "unit_price", 0),
+                    "stock_quantity": getattr(instance, "stock_quantity", 0),
+                    "minimum_stock": getattr(instance, "minimum_stock", 0),
+                    "is_active": getattr(instance, "is_active", True),
+                }
+            )

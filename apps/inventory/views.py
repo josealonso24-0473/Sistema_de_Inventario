@@ -13,7 +13,7 @@ from apps.inventory.observers.stock_alert_observer import LowStockAlertObserver
 from apps.inventory.services.inventory_service import InventoryService, InsufficientStockError
 from apps.products.services.product_service import ProductService
 from config.data_source import get_product_repository
-from config.mock_data import get_mock_movements
+from config.mock_data import create_mock_movement, get_mock_movements
 
 
 @method_decorator(login_required, name="dispatch")
@@ -35,8 +35,22 @@ def movement_create_view(request):
 
     if request.method == "POST" and form.is_valid():
         if getattr(settings, "USE_MOCK_DATA", False):
-            messages.success(request, "Modo visualización: el movimiento no se guarda.")
-            return redirect("inventory:movements")
+            try:
+                create_mock_movement(
+                    product_id=form.cleaned_data["product"],
+                    movement_type=form.cleaned_data["movement_type"],
+                    quantity=form.cleaned_data["quantity"],
+                    reason=form.cleaned_data.get("reason") or "",
+                    user=request.user,
+                )
+            except ValueError as exc:
+                form.add_error(None, str(exc))
+            else:
+                messages.success(
+                    request,
+                    "Movimiento registrado correctamente (modo mock, no se guarda en BD).",
+                )
+                return redirect("inventory:movements")
         repo = get_product_repository()
         subject = StockSubject()
         subject.attach(LowStockAlertObserver())
