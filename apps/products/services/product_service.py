@@ -15,7 +15,27 @@ class ProductService:
         low_stock_only: bool = False,
     ) -> Iterable[Product]:
         qs = self._repository.get_all()
-        if category_id:
+        # Soporte para listas (modo mock) sin .filter()
+        if not hasattr(qs, "filter"):
+            items = list(qs)
+            if category_id is not None:
+                items = [
+                    p
+                    for p in items
+                    if getattr(p, "category_id", None) == category_id
+                    or (
+                        getattr(p, "category", None)
+                        and getattr(p.category, "id", getattr(p.category, "pk", None)) == category_id
+                    )
+                ]
+            if low_stock_only:
+                items = [
+                    p
+                    for p in items
+                    if getattr(p, "stock_quantity", 0) <= getattr(p, "minimum_stock", 0)
+                ]
+            return items
+        if category_id is not None:
             qs = qs.filter(category_id=category_id)
         if low_stock_only:
             from django.db.models import F

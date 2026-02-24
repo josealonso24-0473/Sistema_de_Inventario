@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import F
@@ -22,15 +23,30 @@ def _parse_date(value):
         return None
 
 
-@login_required
-def movement_report_view(request):
-    movements = StockMovement.objects.select_related("product", "performed_by")
+def _get_movements_queryset(request):
+    if getattr(settings, "USE_MOCK_DATA", False):
+        from config.mock_data import get_mock_movements
 
+        movements = get_mock_movements()
+        movement_type = request.GET.get("movement_type")
+        product_id = request.GET.get("product")
+        date_from = _parse_date(request.GET.get("date_from"))
+        date_to = _parse_date(request.GET.get("date_to"))
+        if movement_type:
+            movements = [m for m in movements if m.movement_type == movement_type]
+        if product_id:
+            pid = int(product_id)
+            movements = [m for m in movements if getattr(m.product, "id", m.product_id) == pid]
+        if date_from:
+            movements = [m for m in movements if m.created_at.date() >= date_from]
+        if date_to:
+            movements = [m for m in movements if m.created_at.date() <= date_to]
+        return movements
+    movements = StockMovement.objects.select_related("product", "performed_by")
     movement_type = request.GET.get("movement_type")
     product_id = request.GET.get("product")
     date_from = _parse_date(request.GET.get("date_from"))
     date_to = _parse_date(request.GET.get("date_to"))
-
     if movement_type:
         movements = movements.filter(movement_type=movement_type)
     if product_id:
@@ -39,6 +55,12 @@ def movement_report_view(request):
         movements = movements.filter(created_at__date__gte=date_from)
     if date_to:
         movements = movements.filter(created_at__date__lte=date_to)
+    return movements
+
+
+@login_required
+def movement_report_view(request):
+    movements = _get_movements_queryset(request)
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -75,7 +97,12 @@ def movement_report_view(request):
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
-    products = Product.objects.filter(is_active=True)
+    if getattr(settings, "USE_MOCK_DATA", False):
+        from config.mock_data import get_mock_products
+
+        products = get_mock_products(active_only=True)
+    else:
+        products = Product.objects.filter(is_active=True)
     return render(
         request,
         "reports/movement_report.html",
@@ -89,9 +116,14 @@ def movement_report_view(request):
 
 @login_required
 def low_stock_report_view(request):
-    products = Product.objects.filter(
-        is_active=True, stock_quantity__lte=F("minimum_stock")
-    )
+    if getattr(settings, "USE_MOCK_DATA", False):
+        from config.mock_data import get_mock_low_stock_products
+
+        products = get_mock_low_stock_products()
+    else:
+        products = Product.objects.filter(
+            is_active=True, stock_quantity__lte=F("minimum_stock")
+        )
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
         filename = f"low_stock_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"

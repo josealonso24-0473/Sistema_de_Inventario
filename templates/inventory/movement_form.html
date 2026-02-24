@@ -17,12 +17,7 @@
   {% csrf_token %}
   <div class="mb-3">
     <label for="id_product" class="form-label">{{ form.product.label }}</label>
-    <select name="product" id="id_product" class="form-select {% if form.product.errors %}is-invalid{% endif %}">
-      <option value="">Seleccione un producto</option>
-      {% for value, label in form.product.field.widget.choices %}
-      {% if value %}<option value="{{ value }}" {% if form.product.value and form.product.value.id == value %}selected{% endif %}>{{ label }}</option>{% endif %}
-      {% endfor %}
-    </select>
+    {{ form.product }}
     {% if form.product.errors %}
     <div class="invalid-feedback d-block">
       {% for error in form.product.errors %}{{ error }}{% endfor %}

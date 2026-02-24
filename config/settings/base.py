@@ -1,4 +1,3 @@
-import dj_database_url
 from pathlib import Path
 
 from decouple import Csv, config
@@ -48,6 +47,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "config.context_processors.use_mock_data",
             ],
         },
     },
@@ -56,15 +56,16 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# PostgreSQL. La BD debe existir; configurar en .env con DATABASE_URL.
+# USE_MOCK_DATA = True: datos desde config.mock_data (archivo), sin BD de negocio.
+# Se usa SQLite solo para auth/sessions; el resto es mock.
+USE_MOCK_DATA = config("USE_MOCK_DATA", default=True, cast=bool)
+
+# BD solo para Django (auth, sessions, admin). Con USE_MOCK_DATA el negocio usa mock_data.
 DATABASES = {
-    "default": dj_database_url.parse(
-        config(
-            "DATABASE_URL",
-            default="postgres://postgres:postgres@127.0.0.1:5432/inventario",
-        ),
-        conn_max_age=600,
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [

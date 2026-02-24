@@ -58,6 +58,11 @@
     </nav>
 
     <div class="container">
+      {% if USE_MOCK_DATA %}
+      <div class="alert alert-info py-2 mb-2" role="alert">
+        <strong>Modo visualización:</strong> datos mock desde archivo (sin base de datos de negocio).
+      </div>
+      {% endif %}
       {% if messages %}
       {% for message in messages %}
       <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
