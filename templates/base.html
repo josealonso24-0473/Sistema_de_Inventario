@@ -1,84 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Sistema de Inventario{% endblock %}</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-      crossorigin="anonymous"
-    />
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'dashboard:index' %}">Inventario</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'products:list' %}">Productos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'inventory:movements' %}">Movimientos</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Reportes</a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{% url 'reports:movement_report' %}">Movimientos</a></li>
-                <li><a class="dropdown-item" href="{% url 'reports:low_stock_report' %}">Stock bajo</a></li>
-              </ul>
-            </li>
-          </ul>
-          <ul class="navbar-nav">
-            {% if user.is_authenticated %}
-            <li class="nav-item">
-              <span class="navbar-text me-2">Hola, {{ user.username }}</span>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'accounts:logout' %}">Salir</a>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'accounts:login' %}">Entrar</a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Sistema de Inventario{% endblock %}</title>
 
-    <div class="container">
-      {% if USE_MOCK_DATA %}
-      <div class="alert alert-info py-2 mb-2" role="alert">
-        <strong>Modo visualización:</strong> datos mock desde archivo (sin base de datos de negocio).
-      </div>
-      {% endif %}
-      {% if messages %}
-      {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% block content %}{% endblock %}
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Fuente moderna -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Navbar más moderna */
+    .navbar {
+      background: linear-gradient(90deg, #1e3c72, #2a5298);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-link {
+      font-weight: 500;
+    }
+
+    /* Contenedor principal */
+    .main-container {
+      padding-bottom: 40px;
+    }
+
+    /* Cards más suaves */
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Botones más elegantes */
+    .btn {
+      border-radius: 8px;
+    }
+
+    /* Tablas más limpias */
+    .table {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .table thead {
+      background-color: #f1f3f5;
+    }
+
+    /* Alertas más suaves */
+    .alert {
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'dashboard:index' %}">
+      Inventario Pro
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'products:list' %}">
+            Productos
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'inventory:movements' %}">
+            Movimientos
+          </a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            Reportes
+          </a>
+          <ul class="dropdown-menu shadow-sm border-0">
+            <li>
+              <a class="dropdown-item" href="{% url 'reports:movement_report' %}">
+                Movimientos
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'reports:low_stock_report' %}">
+                Stock bajo
+              </a>
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+
+      <ul class="navbar-nav align-items-center">
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <span class="navbar-text me-3">
+            {{ user.username }}
+          </span>
+        </li>
+        <li class="nav-item">
+          <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-light">
+              Salir
+            </button>
+          </form>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="btn btn-sm btn-light" href="{% url 'accounts:login' %}">
+            Entrar
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+
     </div>
+  </div>
+</nav>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-q2ky5o1m0B7P2m3v7UQeRk5v0zzakDx4zY/boYYGr2susx1bXodH4qvZ5q7S9V0M"
-      crossorigin="anonymous"
-    ></script>
-  </body>
+<div class="container main-container">
+
+  {% if USE_MOCK_DATA %}
+  <div class="alert alert-info py-2 mb-3">
+    <strong>Modo visualización:</strong> datos mock desde archivo.
+  </div>
+  {% endif %}
+
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
 </html>
-
