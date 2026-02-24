@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo movimiento{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-3">Registrar movimiento de stock</h1>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="product" class="form-label">Producto</label>
+    <select name="product" id="product" class="form-select" required>
+      <option value="">Seleccione un producto</option>
+      {% for product in products %}
+      <option value="{{ product.id }}">{{ product.sku }} - {{ product.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="movement_type" class="form-label">Tipo de movimiento</label>
+    <select name="movement_type" id="movement_type" class="form-select" required>
+      <option value="ENTRY">Entrada</option>
+      <option value="EXIT">Salida</option>
+      <option value="ADJUSTMENT">Ajuste</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="quantity" class="form-label">Cantidad</label>
+    <input
+      type="number"
+      class="form-control"
+      id="quantity"
+      name="quantity"
+      min="1"
+      required
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="reason" class="form-label">Motivo (opcional)</label>
+    <input type="text" class="form-control" id="reason" name="reason" />
+  </div>
+
+  <button type="submit" class="btn btn-primary">Guardar</button>
+</form>
+{% endblock %}
+
