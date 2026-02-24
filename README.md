@@ -36,24 +36,27 @@ Este proyecto implementa el sistema de gestión de inventario descrito en el doc
    pip install -r requirements.txt
    ```
 
-3. Crear archivo `.env` en la raíz del proyecto (mismo nivel que `manage.py`), basado en este ejemplo:
+3. **Base de datos PostgreSQL**: crear la base de datos en tu servidor PostgreSQL (pgAdmin, psql u otra herramienta). Este proyecto no crea la BD; usa una ya existente y configura la conexión en `.env`.
+
+4. Crear archivo `.env` en la raíz del proyecto (mismo nivel que `manage.py`), basado en `.env.example`:
 
    ```env
    SECRET_KEY=una-clave-secreta-larga
    DEBUG=True
    ALLOWED_HOSTS=localhost,127.0.0.1
-   DATABASE_URL=sqlite:///db.sqlite3
+   DATABASE_URL=postgres://postgres:TU_PASSWORD@127.0.0.1:5432/inventario
    ```
 
-4. Ejecutar migraciones y crear superusuario:
+   Sustituye `TU_PASSWORD` por la contraseña del usuario `postgres` (o el usuario que uses).
+
+5. Ejecutar migraciones y crear superusuario:
 
    ```bash
-   python manage.py makemigrations
    python manage.py migrate
    python manage.py createsuperuser
    ```
 
-5. Iniciar el servidor de desarrollo:
+6. Iniciar el servidor de desarrollo:
 
    ```bash
    python manage.py runserver

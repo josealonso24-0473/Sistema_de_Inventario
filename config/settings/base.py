@@ -56,12 +56,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Base de datos fijada a SQLite para poder correr sin .env
+# PostgreSQL. La BD debe existir; configurar en .env con DATABASE_URL.
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.parse(
+        config(
+            "DATABASE_URL",
+            default="postgres://postgres:postgres@127.0.0.1:5432/inventario",
+        ),
+        conn_max_age=600,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
