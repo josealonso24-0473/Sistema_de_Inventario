@@ -5,49 +5,66 @@
 {% block content %}
 <h1 class="h4 mb-3">Registrar movimiento de stock</h1>
 
-{% if error %}
-<div class="alert alert-danger">{{ error }}</div>
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+  {% for error in form.non_field_errors %}
+  {{ error }}
+  {% endfor %}
+</div>
 {% endif %}
 
-<form method="post">
+<form method="post" novalidate>
   {% csrf_token %}
   <div class="mb-3">
-    <label for="product" class="form-label">Producto</label>
-    <select name="product" id="product" class="form-select" required>
+    <label for="id_product" class="form-label">{{ form.product.label }}</label>
+    <select name="product" id="id_product" class="form-select {% if form.product.errors %}is-invalid{% endif %}">
       <option value="">Seleccione un producto</option>
-      {% for product in products %}
-      <option value="{{ product.id }}">{{ product.sku }} - {{ product.name }}</option>
+      {% for value, label in form.product.field.widget.choices %}
+      {% if value %}<option value="{{ value }}" {% if form.product.value and form.product.value.id == value %}selected{% endif %}>{{ label }}</option>{% endif %}
       {% endfor %}
     </select>
+    {% if form.product.errors %}
+    <div class="invalid-feedback d-block">
+      {% for error in form.product.errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="mb-3">
-    <label for="movement_type" class="form-label">Tipo de movimiento</label>
-    <select name="movement_type" id="movement_type" class="form-select" required>
-      <option value="ENTRY">Entrada</option>
-      <option value="EXIT">Salida</option>
-      <option value="ADJUSTMENT">Ajuste</option>
+    <label for="id_movement_type" class="form-label">{{ form.movement_type.label }}</label>
+    <select name="movement_type" id="id_movement_type" class="form-select {% if form.movement_type.errors %}is-invalid{% endif %}">
+      {% for value, label in form.movement_type.field.choices %}
+      <option value="{{ value }}" {% if form.movement_type.value == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
     </select>
+    {% if form.movement_type.errors %}
+    <div class="invalid-feedback d-block">
+      {% for error in form.movement_type.errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="mb-3">
-    <label for="quantity" class="form-label">Cantidad</label>
-    <input
-      type="number"
-      class="form-control"
-      id="quantity"
-      name="quantity"
-      min="1"
-      required
-    />
+    <label for="id_quantity" class="form-label">{{ form.quantity.label }}</label>
+    <input type="number" name="quantity" value="{{ form.quantity.value|default:'' }}" min="1" id="id_quantity" class="form-control {% if form.quantity.errors %}is-invalid{% endif %}">
+    {% if form.quantity.errors %}
+    <div class="invalid-feedback d-block">
+      {% for error in form.quantity.errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="mb-3">
-    <label for="reason" class="form-label">Motivo (opcional)</label>
-    <input type="text" class="form-control" id="reason" name="reason" />
+    <label for="id_reason" class="form-label">{{ form.reason.label }}</label>
+    <input type="text" name="reason" value="{{ form.reason.value|default:'' }}" maxlength="255" id="id_reason" class="form-control {% if form.reason.errors %}is-invalid{% endif %}">
+    {% if form.reason.errors %}
+    <div class="invalid-feedback d-block">
+      {% for error in form.reason.errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{% url 'inventory:movements' %}" class="btn btn-outline-secondary">Cancelar</a>
 </form>
 {% endblock %}
-
