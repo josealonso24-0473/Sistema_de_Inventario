@@ -1,0 +1,76 @@
+============================================================
+        COMANDOS NECESARIOS PARA EJECUTAR EL PROYECTO
+============================================================
+
+
+1) CREAR EL ENTORNO VIRTUAL
+   (Solo si no lo tienes creado)
+
+   python -m venv venv
+
+
+------------------------------------------------------------
+
+2) ACTIVAR EL ENTORNO VIRTUAL
+
+   .\venv\Scripts\Activate.ps1
+
+
+------------------------------------------------------------
+
+3) SI APARECE EL ERROR:
+   "La ejecución de scripts está deshabilitada en este sistema"
+
+   Ejecuta este comando y luego vuelve a activar el entorno:
+
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+
+------------------------------------------------------------
+
+4) VERIFICAR PAQUETES INSTALADOS (OPCIONAL)
+
+   pip list
+
+
+------------------------------------------------------------
+
+5) INSTALAR DEPENDENCIAS
+
+   Instalar Django (si no está instalado):
+
+   pip install django
+
+
+   Instalar dependencias del proyecto (OBLIGATORIO):
+
+   pip install -r requirements.txt
+
+
+------------------------------------------------------------
+
+6) APLICAR MIGRACIONES
+
+   python manage.py migrate
+
+
+------------------------------------------------------------
+
+7) CREAR UNA CUENTA DE ADMINISTRADOR ()
+
+   python manage.py createsuperuser
+
+   El sistema solicitará:
+   - Username
+   - Email
+   - Password (no se muestra en pantalla)
+
+
+------------------------------------------------------------
+
+8) EJECUTAR EL SERVIDOR
+
+   python manage.py runserver
+
+
+============================================================
